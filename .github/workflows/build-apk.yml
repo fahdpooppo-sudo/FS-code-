@@ -23,8 +23,12 @@ jobs:
         run: |
           mkdir project
           unzip -q FS-Code-GitHub-Actions.zip -d project
-          PROJECT_DIR=$(find project -name settings.gradle.kts -o -name settings.gradle | head -1 | xargs dirname)
-          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+          PROJECT_DIR=$(find project -type f \( -name settings.gradle.kts -o -name settings.gradle \) -print -quit | xargs dirname)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Gradle settings file not found"
+            exit 1
+          fi
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           echo "Project found at: $PROJECT_DIR"
 
       - name: Set up Java
@@ -38,14 +42,12 @@ jobs:
         with:
           gradle-version: "8.13"
 
-      
-- name: Set up Android SDK
-  uses: android-actions/setup-android@v4
-  with:
-    packages: 'platform-tools'
-    
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
 
-      - name: Install Android SDK
+      - name: Install Android SDK packages
         run: |
           sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
